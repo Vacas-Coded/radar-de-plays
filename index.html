@@ -160,6 +160,29 @@ tbody tr:hover td{background:var(--panel-2)}
 .blocked{display:flex;flex-direction:column;gap:4px;background:var(--down-soft);border:1px solid color-mix(in srgb,var(--down) 40%,var(--line));border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:13.5px;color:var(--fg-2)}
 .blocked b{color:var(--fg)}
 .msg{font-size:12.5px;color:var(--fg-2);min-height:1.2em;margin:6px 2px 0}
+/* cartera */
+.sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.sum div{background:var(--panel);padding:14px 16px}
+.sum .k{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-3)}
+.sum .v{font:500 22px/1.25 var(--f-mono);font-variant-numeric:tabular-nums;margin-top:4px}
+.sum .s{font-size:12.5px}
+.frm{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px;margin-top:10px}
+.frm input{width:150px}
+.frm input.wide{flex:1 1 260px;width:auto}
+.frm label{font-size:12px;color:var(--fg-3);display:flex;flex-direction:column;gap:4px}
+.cols2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:980px){.cols2{grid-template-columns:1fr}}
+textarea{font:400 12px/1.4 var(--f-mono);color:var(--fg);background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:10px;width:100%;min-height:90px;resize:vertical}
+.alist{border:1px solid var(--line);border-radius:10px;background:var(--panel);margin-top:10px}
+.arow{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);font-size:13.5px}
+.arow:last-child{border-bottom:0}
+.arow .st{font:500 11px var(--f-mono);padding:3px 6px;border-radius:4px;background:var(--panel-2);color:var(--fg-3)}
+.arow .st.on{color:var(--up);background:var(--up-soft)} .arow .st.hit{color:var(--accent);background:var(--accent-soft)}
+.tnote{margin:0;font-size:12.5px;color:var(--fg-2);background:var(--panel-2);border-left:2px solid var(--accent);border-radius:4px;padding:6px 9px;white-space:pre-wrap}
+.tile textarea{min-height:64px}
+.toasts{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:16px;z-index:50;display:flex;flex-direction:column;gap:8px;max-width:min(360px,calc(100vw - 32px))}
+.toast{background:var(--panel-2);border:1px solid var(--accent);border-radius:10px;padding:12px 14px;font-size:13.5px;box-shadow:0 10px 30px #0008}
+.toast b{display:block;color:var(--accent);margin-bottom:2px}
 footer{margin-top:36px;color:var(--fg-3);font-size:12.5px;max-width:90ch}
 </style>
 </head>
@@ -184,6 +207,7 @@ footer{margin-top:36px;color:var(--fg-3);font-size:12.5px;max-width:90ch}
   <nav class="tabs" role="tablist" aria-label="Secciones"><div class="wrap" style="display:flex;gap:4px;width:100%">
     <button role="tab" data-tab="charts" aria-selected="true">Charts <span id="n-charts"></span></button>
     <button role="tab" data-tab="nfts" aria-selected="false">NFTs <span id="n-nfts"></span></button>
+    <button role="tab" data-tab="cartera" aria-selected="false">Mi cartera <span id="n-cartera"></span></button>
     <button role="tab" data-tab="resumen" aria-selected="false">Resumen y radar</button>
   </div></nav>
 </header>
@@ -244,6 +268,60 @@ footer{margin-top:36px;color:var(--fg-3);font-size:12.5px;max-width:90ch}
     <div class="caps" id="caps"></div>
   </section>
 
+  <!-- CARTERA -->
+  <section id="p-cartera" role="tabpanel" hidden>
+    <div class="sum" id="pf-sum"></div>
+
+    <h2>Posiciones <i>precio en vivo · se guarda en este navegador</i></h2>
+    <div class="tbl-wrap"><table style="min-width:820px">
+      <thead><tr><th style="cursor:default">Token</th><th style="cursor:default">Cantidad</th><th style="cursor:default">Entrada</th><th style="cursor:default">Precio</th><th style="cursor:default">Invertido</th><th style="cursor:default">Valor</th><th style="cursor:default">PnL</th><th style="cursor:default">PnL %</th><th style="cursor:default">Peso</th><th style="cursor:default"></th></tr></thead>
+      <tbody id="pf-body"></tbody>
+    </table></div>
+    <form class="frm" id="pf-form">
+      <label>Token<select id="pf-tok" aria-label="Token"></select></label>
+      <label>Cantidad<input id="pf-qty" type="number" step="any" min="0" placeholder="p. ej. 150000" required></label>
+      <label>Precio de entrada ($)<input id="pf-entry" type="number" step="any" min="0" placeholder="p. ej. 0.0031" required></label>
+      <button class="btn" type="button" id="pf-now">Usar precio actual</button>
+      <button class="btn primary" type="submit">Añadir posición</button>
+    </form>
+
+    <div class="cols2">
+      <div>
+        <h2>Alertas <i id="al-sub"></i></h2>
+        <div class="frm" style="margin-top:0">
+          <span class="note" id="notif-txt" style="flex:1 1 220px">Las alertas saltan mientras el dashboard esté abierto (aunque sea en otra pestaña).</span>
+          <button class="btn" id="notif-on">Activar avisos del navegador</button>
+        </div>
+        <form class="frm" id="al-form">
+          <label>Token<select id="al-tok" aria-label="Token de la alerta"></select></label>
+          <label>Condición<select id="al-type" aria-label="Condición">
+            <option value="above">Precio por encima de</option>
+            <option value="below">Precio por debajo de</option>
+            <option value="up1h">Sube en 1h más de (%)</option>
+            <option value="down1h">Cae en 1h más de (%)</option>
+            <option value="up24">Sube en 24h más de (%)</option>
+            <option value="down24">Cae en 24h más de (%)</option>
+          </select></label>
+          <label>Valor<input id="al-val" type="number" step="any" min="0" required placeholder="$ o %"></label>
+          <button class="btn primary" type="submit">Crear alerta</button>
+        </form>
+        <div class="alist" id="al-list"></div>
+      </div>
+      <div>
+        <h2>Pasar al móvil <i>o a otro navegador</i></h2>
+        <p class="note">Copia tu configuración (tokens añadidos, ocultos, posiciones, alertas y notas) y pégala en el otro dispositivo. La key de OpenSea no se incluye.</p>
+        <div class="frm">
+          <button class="btn primary" id="sync-copy">Copiar mi configuración</button>
+          <span class="note" id="sync-msg"></span>
+        </div>
+        <div class="frm" style="flex-direction:column;align-items:stretch">
+          <textarea id="sync-in" placeholder="Pega aquí la configuración copiada del otro dispositivo" aria-label="Configuración a importar"></textarea>
+          <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="sync-merge">Importar y combinar</button><button class="btn" id="sync-replace">Importar y reemplazar</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- RESUMEN -->
   <section id="p-resumen" role="tabpanel" hidden>
     <h2>Todos los tokens <i>pulsa una cabecera para ordenar</i></h2>
@@ -267,8 +345,9 @@ footer{margin-top:36px;color:var(--fg-3);font-size:12.5px;max-width:90ch}
     <div class="radar" id="radar"></div>
   </section>
 
-  <footer>Precios, market cap, liquidez, volumen y compras/ventas: API pública de DexScreener, consultada desde tu navegador mientras la página está abierta. 7d, 30d y distancia al ATH: CoinPaprika (cada 30 min). Floors: OpenSea. Los charts son los widgets oficiales de DexScreener y GeckoTerminal, en tiempo real. Lo que añadas o cambies se guarda en este navegador.</footer>
+  <footer>Precios, market cap, liquidez, volumen y compras/ventas: API pública de DexScreener, consultada desde tu navegador mientras la página está abierta. 7d, 30d y distancia al ATH: CoinPaprika (cada 30 min). «vs SOL/ETH» compara el 24h del token con el de su cadena. Floors: OpenSea. Los charts son los widgets oficiales de DexScreener y GeckoTerminal, en tiempo real. Lo que añadas o cambies se guarda en este navegador.</footer>
 </main>
+<div class="toasts" id="toasts" aria-live="polite"></div>
 
 <script>
 (() => {
@@ -320,8 +399,9 @@ const S = {
   extra: LS.get("extra", []), hidden: LS.get("hidden", []), osKey: LS.get("oskey", ""),
   dex: {}, prev: {}, pap: LS.get("pap", {}), papAt: LS.get("papAt", 0), nft: LS.get("nft", {}), nftHist: LS.get("nfthist", {}), eth: LS.get("eth", null),
   lastOk: 0, err: null,
+  pos: LS.get("pos", []), alerts: LS.get("alerts", []), notes: LS.get("notes", {}), chain: LS.get("chain", {}), editing: null,
 };
-if (["charts", "nfts", "resumen"].includes(location.hash.slice(1))) S.tab = location.hash.slice(1);
+if (["charts", "nfts", "cartera", "resumen"].includes(location.hash.slice(1))) S.tab = location.hash.slice(1);
 const tokens = () => TOKENS.concat(S.extra).filter(t => !S.hidden.includes(t.id));
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
@@ -374,6 +454,19 @@ async function fetchDex() {
   S.prev = Object.fromEntries(Object.entries(S.dex).map(([k, v]) => [k, v.price]));
   for (const t of list) { const d = pickPair(t, pairs); if (d) S.dex[t.id] = d; }
 }
+async function fetchChains() {
+  try {
+    const r = await fetch("https://api.dexscreener.com/latest/dex/tokens/So11111111111111111111111111111111111111112,0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2");
+    const j = await r.json(); const ps = j.pairs || [];
+    const best = (chain, sym) => ps.filter(p => p.chainId === chain && p.baseToken.symbol === sym && /USD/.test(p.quoteToken.symbol) && (p.volume?.h24 || 0) > 10000)
+      .sort((a, b) => (b.liquidity?.usd || 0) - (a.liquidity?.usd || 0))[0];
+    const sol = best("solana", "SOL"), eth = best("ethereum", "WETH");
+    if (sol) S.chain.sol = { price: +sol.priceUsd, h24: sol.priceChange?.h24, h1: sol.priceChange?.h1 };
+    if (eth) { S.chain.eth = { price: +eth.priceUsd, h24: eth.priceChange?.h24, h1: eth.priceChange?.h1 }; S.eth = +eth.priceUsd; LS.set("eth", S.eth); }
+    LS.set("chain", S.chain);
+  } catch (e) {}
+}
+const chainRef = t => t.chain === "solana" ? ["SOL", S.chain.sol] : ["ethereum", "base", "arbitrum", "robinhood"].includes(t.chain) ? ["ETH", S.chain.eth] : [null, null];
 async function fetchEth() {
   try {
     const r = await fetch("https://api.dexscreener.com/latest/dex/tokens/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2");
@@ -465,13 +558,18 @@ function buildTiles() {
           <div><div class="k">30d</div><div class="v chg" data-f="c30">—</div></div>
           <div><div class="k">Desde ATH</div><div class="v chg" data-f="ath">—</div></div>
           <div><div class="k">Liq / MC</div><div class="v" data-f="lmc">—</div></div>
+          <div><div class="k" data-f="relk">vs cadena 24h</div><div class="v chg" data-f="rel">—</div></div>
+          <div><div class="k">Tu posición</div><div class="v" data-f="posv">—</div></div>
+          <div><div class="k">Tu PnL</div><div class="v chg" data-f="pnl">—</div></div>
         </div>
+        <p class="tnote" data-f="note" hidden></p>
+        <div class="ned" data-f="ned" hidden><textarea data-note="${esc(t.id)}" placeholder="Tesis, catalizador, nivel de salida…" aria-label="Nota de ${esc(t.name)}"></textarea></div>
         <div class="press" title="Número de compras frente a ventas en las últimas 24 h">
           <div class="bar"><span class="b" data-f="bb" style="width:50%"></span><span class="s" data-f="sb" style="width:50%"></span></div>
           <div class="lab"><span data-f="buys">— compras</span><span data-f="sells">— ventas</span></div>
         </div>
         <div class="t-foot"><span class="pill" data-s="${esc(t.stage)}">${esc(t.stage)}</span>
-          <div class="lnks">${linksFor(t, d).slice(0, 3).map(l => `<a class="lnk" href="${esc(l[1])}" target="_blank" rel="noopener">${esc(l[0])} ↗</a>`).join("")}</div></div>
+          <div class="lnks"><button class="ca" data-editnote="${esc(t.id)}">Nota</button>${linksFor(t, d).slice(0, 3).map(l => `<a class="lnk" href="${esc(l[1])}" target="_blank" rel="noopener">${esc(l[0])} ↗</a>`).join("")}</div></div>
       </div>
     </article>`;
   }).join("") || `<p class="note">No hay tokens. Añade uno desde «Resumen y radar».</p>`;
@@ -492,6 +590,12 @@ function fillTiles() {
     const tot = d.buys + d.sells; const bp = tot ? d.buys / tot * 100 : 50;
     f("bb").style.width = bp + "%"; f("sb").style.width = (100 - bp) + "%";
     setTxt(f("buys"), (d.buys || 0).toLocaleString("es-ES") + " compras"); setTxt(f("sells"), (d.sells || 0).toLocaleString("es-ES") + " ventas");
+    const t = tokens().find(x => x.id === id); const [cn, cr] = t ? chainRef(t) : [null, null];
+    setTxt(f("relk"), cn ? `vs ${cn} 24h` : "vs cadena 24h");
+    const rel = cr && cr.h24 != null && d.h24 != null ? d.h24 - cr.h24 : null; setTxt(f("rel"), rel == null ? "—" : fPct(rel), cls(rel));
+    const ps = posOf(id); setTxt(f("posv"), ps ? fMoney(ps.value) : "—"); setTxt(f("pnl"), ps ? fPct(ps.pnlPct) : "—", ps ? cls(ps.pnlPct) : "na");
+    const note = S.notes[id] || ""; const ne = f("note"); ne.textContent = note; ne.hidden = !note || S.editing === id;
+    f("ned").hidden = S.editing !== id;
   });
   // cinta
   $("#tape").innerHTML = tokens().map(t => { const d = S.dex[t.id] || {};
@@ -573,17 +677,78 @@ function renderTable() {
   if (hid.length) $("#radar").insertAdjacentHTML("afterbegin", `<div class="rrow"><b>Ocultos</b><span></span><p>${hid.map(t => esc(t.name)).join(", ")}</p><div class="lnks"><button class="btn" id="unhide">Mostrar de nuevo</button></div></div>`);
 }
 
+/* =================== cartera =================== */
+function posOf(id) {
+  const list = S.pos.filter(p => p.tokenId === id); if (!list.length) return null;
+  const d = S.dex[id]; const qty = list.reduce((s, p) => s + p.qty, 0); const cost = list.reduce((s, p) => s + p.qty * p.entry, 0);
+  const value = d ? qty * d.price : null; return { qty, cost, value, pnl: value != null ? value - cost : null, pnlPct: value != null && cost ? (value / cost - 1) * 100 : null };
+}
+function tokOpts() { return tokens().map(t => `<option value="${esc(t.id)}">${esc(t.name)} ($${esc(t.ticker)})</option>`).join(""); }
+function renderCartera() {
+  const nameOf = id => (tokens().find(t => t.id === id) || TOKENS.concat(S.extra).find(t => t.id === id) || { name: id, ticker: "?" });
+  ["#pf-tok", "#al-tok"].forEach(sel => { const el = $(sel); const v = el.value; const html = tokOpts(); if (el.dataset.h !== html) { el.innerHTML = html; el.dataset.h = html; if (v) el.value = v; } });
+  let cost = 0, value = 0, missing = 0;
+  const rows = S.pos.map(p => { const d = S.dex[p.tokenId]; const c = p.qty * p.entry; const v = d ? p.qty * d.price : null; cost += c; if (v != null) value += v; else missing++; return { p, d, c, v }; });
+  const pnl = value - cost, pct = cost ? (value / cost - 1) * 100 : null;
+  $("#n-cartera").textContent = S.pos.length || "";
+  const best = rows.filter(r => r.v != null).sort((a, b) => (b.v / b.c) - (a.v / a.c))[0];
+  $("#pf-sum").innerHTML = `
+    <div><div class="k">Valor actual</div><div class="v">${S.pos.length ? fMoney(value) : "—"}</div><div class="s note">${missing ? missing + " posición(es) sin precio aún" : S.pos.length + " posiciones"}</div></div>
+    <div><div class="k">Invertido</div><div class="v">${S.pos.length ? fMoney(cost) : "—"}</div></div>
+    <div><div class="k">PnL total</div><div class="v chg ${cls(pnl)}" style="font-size:22px">${S.pos.length ? (pnl >= 0 ? "+" : "−") + fMoney(Math.abs(pnl)).replace("$", "$") : "—"}</div><div class="s chg ${cls(pct)}">${fPct(pct)}</div></div>
+    <div><div class="k">Mejor posición</div><div class="v" style="font-size:17px">${best ? esc(nameOf(best.p.tokenId).name) : "—"}</div><div class="s chg ${best ? cls(best.v - best.c) : "na"}">${best ? fPct((best.v / best.c - 1) * 100) : ""}</div></div>`;
+  $("#pf-body").innerHTML = rows.length ? rows.map(({ p, d, c, v }) => { const t = nameOf(p.tokenId); const pp = v != null && c ? (v / c - 1) * 100 : null;
+    return `<tr style="cursor:default"><td><div class="nm"><b>${esc(t.name)}</b><small>${esc(t.ticker)}</small></div></td>
+      <td class="num">${p.qty.toLocaleString("es-ES", { maximumFractionDigits: 6 })}</td><td class="num">${fPrice(p.entry)}</td><td class="num">${fPrice(d && d.price)}</td>
+      <td class="num">${fMoney(c)}</td><td class="num">${fMoney(v)}</td><td class="chg ${cls(v - c)}">${v == null ? "—" : (v - c >= 0 ? "+" : "−") + fMoney(Math.abs(v - c))}</td><td class="chg ${cls(pp)}">${fPct(pp)}</td>
+      <td class="num">${v != null && value ? (v / value * 100).toFixed(1) + "%" : "—"}</td><td><button class="x" data-delpos="${esc(p.id)}" aria-label="Borrar posición">✕</button></td></tr>`; }).join("")
+    : `<tr style="cursor:default"><td colspan="10" style="text-align:left;color:var(--fg-3)">Aún no hay posiciones. Añade la primera con el formulario de abajo: token, cantidad y precio de entrada.</td></tr>`;
+  // alertas
+  const TL = { above: "precio ≥", below: "precio ≤", up1h: "sube en 1h ≥", down1h: "cae en 1h ≥", up24: "sube en 24h ≥", down24: "cae en 24h ≥" };
+  const on = S.alerts.filter(a => !a.fired).length;
+  $("#al-sub").textContent = S.alerts.length ? `${on} activas · ${S.alerts.length - on} disparadas` : "";
+  $("#al-list").innerHTML = S.alerts.length ? S.alerts.map(a => { const t = nameOf(a.tokenId); const isPct = !["above", "below"].includes(a.type);
+    return `<div class="arow"><span><b>${esc(t.name)}</b> · ${TL[a.type]} ${isPct ? a.value + "%" : fPrice(a.value)}${a.fired ? ` <span class="note">· saltó ${new Date(a.at).toLocaleString("es-ES", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span>` : ""}</span>
+      ${a.fired ? `<button class="btn" data-rearm="${esc(a.id)}">Reactivar</button>` : `<span class="st on">activa</span>`}<button class="x" data-delal="${esc(a.id)}" aria-label="Borrar alerta">✕</button></div>`; }).join("")
+    : `<div class="arow"><span class="note">Sin alertas. Ejemplo: Loadout · precio por encima de 0.005.</span></div>`;
+  const perm = "Notification" in window ? Notification.permission : "unsupported";
+  $("#notif-on").hidden = perm === "granted" || perm === "unsupported";
+  $("#notif-txt").textContent = perm === "granted" ? "Avisos del navegador activados. Las alertas saltan mientras el dashboard esté abierto (aunque sea en otra pestaña)."
+    : perm === "denied" ? "El navegador tiene bloqueados los avisos para esta web. Verás las alertas como aviso dentro de la página." : "Las alertas saltan mientras el dashboard esté abierto. Activa los avisos para recibirlos aunque estés en otra pestaña.";
+}
+function toast(title, body) {
+  const el = document.createElement("div"); el.className = "toast"; el.innerHTML = `<b>${esc(title)}</b>${esc(body)}`;
+  $("#toasts").appendChild(el); setTimeout(() => el.remove(), 12000);
+}
+function beep() { try { const c = new (window.AudioContext || window.webkitAudioContext)(); const o = c.createOscillator(), g = c.createGain(); o.connect(g); g.connect(c.destination); o.frequency.value = 880; g.gain.setValueAtTime(.15, c.currentTime); g.gain.exponentialRampToValueAtTime(.001, c.currentTime + .5); o.start(); o.stop(c.currentTime + .5); } catch (e) {} }
+function checkAlerts() {
+  let changed = false;
+  for (const a of S.alerts) {
+    if (a.fired) continue; const d = S.dex[a.tokenId]; if (!d) continue;
+    const v = { above: d.price, below: d.price, up1h: d.h1, down1h: d.h1, up24: d.h24, down24: d.h24 }[a.type]; if (v == null) continue;
+    const hit = a.type === "above" ? v >= a.value : a.type === "below" ? v <= a.value : a.type.startsWith("up") ? v >= a.value : v <= -a.value;
+    if (!hit) continue;
+    a.fired = true; a.at = Date.now(); changed = true;
+    const t = tokens().find(x => x.id === a.tokenId) || { name: a.tokenId, ticker: "" };
+    const title = `${t.name} ($${t.ticker})`; const body = `Precio ${fPrice(d.price)} · 1h ${fPct(d.h1)} · 24h ${fPct(d.h24)}`;
+    toast("Alerta: " + title, body); beep();
+    try { if ("Notification" in window && Notification.permission === "granted") new Notification("Radar de Plays · " + title, { body }); } catch (e) {}
+  }
+  if (changed) LS.set("alerts", S.alerts);
+}
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
 /* =================== ciclo =================== */
 function renderAll() {
   document.querySelectorAll("[data-tab]").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === S.tab)));
-  ["charts", "nfts", "resumen"].forEach(t => $("#p-" + t).hidden = S.tab !== t);
+  ["charts", "nfts", "cartera", "resumen"].forEach(t => $("#p-" + t).hidden = S.tab !== t);
   const sel = (attr, val) => document.querySelectorAll(`[${attr}]`).forEach(b => b.setAttribute("aria-pressed", String(b.getAttribute(attr) === String(val))));
   sel("data-source", S.source); sel("data-int", S.int); sel("data-cols", S.cols); sel("data-refresh", S.refresh);
   $("#csort").value = S.csort;
   $("#tiles").style.setProperty("--cols", S.cols);
   document.documentElement.style.setProperty("--ch", S.cols === "3" ? "430px" : "360px");
   $("#n-charts").textContent = tokens().length; $("#n-nfts").textContent = NFTS.length;
-  buildTiles(); fillTiles(); renderNfts(); renderTable(); renderLive();
+  buildTiles(); fillTiles(); renderNfts(); renderTable(); renderCartera(); renderLive();
 }
 function renderLive() {
   const el = $("#live"); el.classList.toggle("on", !!S.lastOk && !S.err); el.classList.toggle("err", !!S.err);
@@ -595,7 +760,8 @@ async function tick(force) {
   if (document.hidden && !force) { schedule(); return; }  // pestaña oculta: no gasta peticiones
   try {
     await fetchDex(); S.err = null; S.lastOk = Date.now();
-    await Promise.all([fetchPaprika(force), S.osKey ? fetchEth().then(() => fetchNfts(force)) : (S.eth ? null : fetchEth())]);
+    await Promise.all([fetchPaprika(force), fetchChains().then(() => S.osKey ? fetchNfts(force) : null)]);
+    checkAlerts();
   } catch (e) { S.err = e.message || "sin conexión"; }
   $("#blocked").hidden = !(S.err && !S.lastOk);
   renderAll(); schedule();
@@ -619,6 +785,24 @@ document.addEventListener("click", async e => {
   const co = t.closest("[data-cols]"); if (co) { S.cols = co.dataset.cols; LS.set("cols", S.cols); renderAll(); return; }
   const rf = t.closest("[data-refresh]"); if (rf) { S.refresh = +rf.dataset.refresh; LS.set("refresh", S.refresh); renderAll(); schedule(); return; }
   if (t.closest("#refresh-now")) { tick(true); return; }
+  const en = t.closest("[data-editnote]"); if (en) { const id = en.dataset.editnote; S.editing = S.editing === id ? null : id; fillTiles();
+    if (S.editing) { const ta = document.querySelector(`textarea[data-note="${CSS.escape(id)}"]`); ta.value = S.notes[id] || ""; ta.focus(); } return; }
+  const dp = t.closest("[data-delpos]"); if (dp) { S.pos = S.pos.filter(p => p.id !== dp.dataset.delpos); LS.set("pos", S.pos); renderAll(); return; }
+  const da = t.closest("[data-delal]"); if (da) { S.alerts = S.alerts.filter(a => a.id !== da.dataset.delal); LS.set("alerts", S.alerts); renderCartera(); return; }
+  const ra = t.closest("[data-rearm]"); if (ra) { const a = S.alerts.find(x => x.id === ra.dataset.rearm); if (a) { a.fired = false; a.at = null; LS.set("alerts", S.alerts); renderCartera(); } return; }
+  if (t.closest("#pf-now")) { const d = S.dex[$("#pf-tok").value]; if (d) $("#pf-entry").value = d.price; return; }
+  if (t.closest("#notif-on")) { try { await Notification.requestPermission(); } catch (x) {} renderCartera(); return; }
+  if (t.closest("#sync-copy")) { const cfg = JSON.stringify({ v: 1, extra: S.extra, hidden: S.hidden, pos: S.pos, alerts: S.alerts, notes: S.notes });
+    const done = m => $("#sync-msg").textContent = m;
+    try { await navigator.clipboard.writeText(cfg); done("Copiada. Pégala en el otro dispositivo, pestaña Mi cartera."); }
+    catch (x) { $("#sync-in").value = cfg; $("#sync-in").select(); done("No se pudo copiar solo: está seleccionada en el cuadro, cópiala a mano."); } return; }
+  const sm = t.closest("#sync-merge, #sync-replace"); if (sm) { try {
+      const c = JSON.parse($("#sync-in").value.trim()); if (!c || c.v !== 1) throw new Error();
+      if (sm.id === "sync-replace") { S.extra = c.extra || []; S.hidden = c.hidden || []; S.pos = c.pos || []; S.alerts = c.alerts || []; S.notes = c.notes || {}; }
+      else { const byId = (a, b) => a.concat((b || []).filter(x => !a.some(y => y.id === x.id)));
+        S.extra = byId(S.extra, c.extra); S.hidden = [...new Set(S.hidden.concat(c.hidden || []))]; S.pos = byId(S.pos, c.pos); S.alerts = byId(S.alerts, c.alerts); S.notes = { ...c.notes, ...S.notes }; }
+      ["extra", "hidden", "pos", "alerts", "notes"].forEach(k => LS.set(k, S[k])); $("#sync-in").value = ""; $("#sync-msg").textContent = "Configuración importada."; tick(true);
+    } catch (x) { $("#sync-msg").textContent = "Ese texto no es una configuración válida del Radar."; } return; }
   const del = t.closest("[data-del]"); if (del) { e.stopPropagation(); const id = del.dataset.del;
     if (S.extra.some(x => x.id === id)) { S.extra = S.extra.filter(x => x.id !== id); LS.set("extra", S.extra); } else { S.hidden.push(id); LS.set("hidden", S.hidden); }
     delete S.dex[id]; renderAll(); return; }
@@ -629,6 +813,16 @@ document.addEventListener("click", async e => {
   if (t.closest("#os-clear")) { S.osKey = ""; LS.set("oskey", ""); S.nft = {}; LS.set("nft", {}); renderNfts(); return; }
 });
 document.addEventListener("keydown", e => { const r = e.target.closest && e.target.closest("tr[data-goto]"); if (r && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); goto(r.dataset.goto); } });
+let noteT;
+document.addEventListener("input", e => { const ta = e.target.closest && e.target.closest("textarea[data-note]"); if (!ta) return;
+  clearTimeout(noteT); noteT = setTimeout(() => { const v = ta.value.trim(); if (v) S.notes[ta.dataset.note] = v; else delete S.notes[ta.dataset.note]; LS.set("notes", S.notes); }, 400); });
+document.addEventListener("focusout", e => { const ta = e.target.closest && e.target.closest("textarea[data-note]"); if (!ta) return;
+  if (e.relatedTarget && e.relatedTarget.dataset && e.relatedTarget.dataset.editnote === ta.dataset.note) return;
+  const v = ta.value.trim(); if (v) S.notes[ta.dataset.note] = v; else delete S.notes[ta.dataset.note]; LS.set("notes", S.notes); S.editing = null; setTimeout(fillTiles, 0); });
+$("#pf-form").addEventListener("submit", e => { e.preventDefault(); const qty = +$("#pf-qty").value, entry = +$("#pf-entry").value; if (!(qty > 0) || !(entry > 0)) return;
+  S.pos.push({ id: uid(), tokenId: $("#pf-tok").value, qty, entry }); LS.set("pos", S.pos); $("#pf-qty").value = ""; $("#pf-entry").value = ""; renderAll(); });
+$("#al-form").addEventListener("submit", e => { e.preventDefault(); const value = +$("#al-val").value; if (!(value > 0)) return;
+  S.alerts.push({ id: uid(), tokenId: $("#al-tok").value, type: $("#al-type").value, value, fired: false }); LS.set("alerts", S.alerts); $("#al-val").value = ""; checkAlerts(); renderCartera(); });
 $("#csort").addEventListener("change", e => { S.csort = e.target.value; LS.set("csort", S.csort); renderAll(); });
 $("#add-form").addEventListener("submit", async e => {
   e.preventDefault();
